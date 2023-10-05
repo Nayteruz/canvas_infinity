@@ -1,9 +1,11 @@
 import { observer } from "mobx-react-lite";
 import { MouseEvent, useEffect, useRef, useState } from "react";
+import { useStores } from "../stores/root-store-context";
 
 const BlockMove = () => {
 
     const layerRef = useRef<HTMLDivElement>(null);
+    const { refs } = useStores();
 
     const [viewport, setViewport] = useState({
         offset: {
@@ -34,8 +36,15 @@ const BlockMove = () => {
     const onNodeMouseDown = (e: MouseEvent) => {
         const pos = e.target.style.transform?.replace(/[a-z\(\)]/g, '').split(', ');
         e.target.style.transform = `translate(${+pos[0] + 5}px, ${+pos[1] + 5}px)`
+
+        refs.setCurrentBlock(e.target as HTMLElement);
         console.log(e, pos);
     }
+
+    const onNodeMouseUp = (e: MouseEvent) => {
+        refs.setCurrentBlock(null);
+    }
+
 
     const handleMouseMove = (e: MouseEvent) => {
         if (!isDragging) {
@@ -61,6 +70,8 @@ const BlockMove = () => {
         if (!layerRef.current) {
         return;
         }
+
+        refs.setOverlayRef(layerRef);
 
         layerRef.current.onwheel = (e: WheelEvent) => {
         e.preventDefault();
@@ -105,6 +116,7 @@ const BlockMove = () => {
                         className="node"
                         key={text}
                         onMouseDown={onNodeMouseDown}
+                        onMouseUp={onNodeMouseUp}
                     >
                         {text}
                     </div>)

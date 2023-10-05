@@ -1,10 +1,10 @@
-import { makeAutoObservable, makeObservable, observable, action } from "mobx";
-import { MutableRefObject } from "react";
+import { makeObservable, observable, action } from "mobx";
+import { MutableRefObject, RefObject } from "react";
 
 class RefStore {
-    CurrentBlock: unknown | null = null;
+    CurrentBlock: HTMLElement | null = null;
     Blocks: unknown[] = [];
-    Overlay: unknown | null = null;
+    Overlay: RefObject<HTMLDivElement> | null = null;
 
     constructor() {
         makeObservable(this, {
@@ -16,11 +16,11 @@ class RefStore {
         })
     }
 
-    setOverlayRef(value: MutableRefObject<HTMLDivElement> | null) {
+    setOverlayRef(value: RefObject<HTMLDivElement> | null) {
         this.Overlay = value
     }
 
-    setCurrentBlock(value: MutableRefObject<HTMLDivElement> | null) {
+    setCurrentBlock(value: HTMLElement | null) {
         this.CurrentBlock = value;
     }
 
