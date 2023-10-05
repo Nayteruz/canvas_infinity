@@ -1,0 +1,110 @@
+.wrapper {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-areas:
+    'top top top'
+    'left center right'
+    'foo foo foo'
+  ;
+  grid-auto-rows: 50px 1fr 30px;
+  grid-auto-columns: 260px 1fr 260px;
+
+  * {
+    box-sizing: border-box;
+  }
+}
+
+.header {
+  grid-area: top;
+  background: #fff;
+  border-bottom: 1px solid #eee;
+}
+
+.left {
+  grid-area: left;
+  background: #fff;
+  border-right: 1px solid #eee;
+}
+
+.right {
+  grid-area: right;
+  background: #fff;
+  border-left: 1px solid #eee;
+}
+
+.footer {
+  grid-area: foo;
+  background: #726d6d;
+}
+
+.main {
+  grid-area: center;
+}
+
+.canvas {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, rgba(0, 0, 0, 0.2) 25%, transparent 25%, transparent 75%, rgba(0, 0, 0, 0.2) 75%, rgba(0, 0, 0, 0.2)), linear-gradient(45deg, rgba(0, 0, 0, 0.2) 25%, transparent 25%, transparent 75%, rgba(0, 0, 0, 0.2) 75%, rgba(0, 0, 0, 0.2));
+  background-color: white;
+  background-size: 20px 20px, 20px 20px;
+  background-position:0 0, 10px 10px;
+  position: relative;
+}
+
+.block {
+  width: 50px;
+  height: 50px;
+  border: 2px solid #ccc;
+  background-color: #eee;
+  position: relative;
+}
+
+.overlay {
+  position: fixed;
+  top: 50px;
+  bottom: 30px;
+  left: 260px;
+  right: 260px;
+}
+
+
+.app {
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  user-select: none;
+}
+
+.container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0px;
+  left: 0px;
+  overflow: hidden;
+}
+
+.nodes-container,
+.connections-container {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  transform-origin: top-left;
+}
+
+.node {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  padding: 8px;
+  background-color: aliceblue;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
