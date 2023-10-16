@@ -73,10 +73,6 @@
   user-select: none;
 }
 
-.app.dragging {
-  cursor: grab;
-}
-
 .container {
 
   $bg-web: #f0efef;
@@ -110,7 +106,7 @@
 }
 
 .node {
-  position: absolute;
+  // position: absolute;
   width: 120px;
   height: 120px;
   padding: 8px;
@@ -123,16 +119,17 @@
   transform-origin: left top;
 }
 
-.node.isDragging {
-  z-index: 999;
-  box-shadow: 0 0 5px 2px #a46daf;
-  &:after {
-    content:"";
-    display: block;
-    position: absolute;
-    left: -200px;
-    right: -200px;
-    top: - 200px;
-    bottom: -200px;
+.node-grab-wrapper {
+  position: absolute;
+  user-select: none;
+  cursor: grab;
+
+  &.grabbing {
+    cursor: grabbing;
+  z-index: 999999;
+
+  > * {
+    box-shadow: 0 0 5px 2px #a46daf;
+  }
   }
 }

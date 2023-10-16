@@ -14,7 +14,7 @@ const App = () => {
       <div className='main'>
         <div className='canvas'>
           <Overlay />
-          <BlockMove3 />
+          <BlockMove />
         </div>
       </div>
       <aside className='right'></aside>

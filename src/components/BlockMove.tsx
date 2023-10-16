@@ -8,12 +8,13 @@ const BlockMove = () => {
     // https://stackoverflow.com/questions/60190965/zoom-scale-at-mouse-position
 
     const layerRef = useRef<HTMLDivElement>(null);
+    const nodeWrapper = useRef<HTMLDivElement>(null);
     const { refs } = useStores();
 
     const [viewport, setViewport] = useState({
         offset: {
-            x: 0.0,
-            y: 0.0
+            x: 0,
+            y: 0
         },
         zoom: 1
     });
@@ -67,17 +68,23 @@ const BlockMove = () => {
         }));
     };
 
-    const zoom128 = viewport.zoom * 128;
-    const zoom32 = viewport.zoom * 32;
-    const zoom16 = viewport.zoom * 16;
-    const viewZoom = `${zoom128}px ${zoom128}px, ${zoom128}px ${zoom128}px, ${zoom32}px ${zoom32}px, ${zoom32}px ${zoom32}px, ${zoom16}px ${zoom16}px, ${zoom16}px ${zoom16}px`;
+    const zoomInitial = viewport.zoom * 128;
+    const zoomValues = [Math.trunc(zoomInitial), 4, 8];
+    let viewZoom = '';
+    for (const [k, v] of zoomValues.entries()) {
+        if (k === 0) {
+            viewZoom += `${v}px ${v}px, ${v}px ${v}px`
+        } else {
+            const z = zoomValues[0] / v;
+            viewZoom += `, ${z}px ${z}px, ${z}px ${z}px`
+        }
+    }
+
 
     useEffect(() => {
         if (!layerRef.current) {
             return;
         }
-
-
 
         refs.setOverlayRef(layerRef);
 
@@ -85,19 +92,21 @@ const BlockMove = () => {
             e.preventDefault();
             e.stopPropagation();
 
-            const speedFactor =
-                (e.deltaMode === 1 ? 0.05 : e.deltaMode ? 1 : 0.002);
+            const speedFactor = (e.deltaMode === 1 ? 0.05 : e.deltaMode ? 1 : 0.002);
 
             setViewport((prev) => {
+                const prevScale = prev.zoom;
                 const pinchDelta = -e.deltaY * speedFactor;
+                const maxMinZoom = Math.min(32, Math.max(0.1, prev.zoom * Math.pow(2, pinchDelta)));
 
                 return {
                     ...prev,
-                    zoom: Math.min(
-                        100,
-                        Math.max(0.1, prev.zoom * Math.pow(2, pinchDelta))
-                    )
+                    zoom: maxMinZoom,
                 };
+
+
+                // experiment
+
             });
         };
     }, [setViewport]);
@@ -127,6 +136,7 @@ const BlockMove = () => {
             <div className="container" style={{ backgroundPosition: `${viewport.offset.x * viewport.zoom}px ${viewport.offset.y * viewport.zoom}px`, backgroundSize: viewZoom }}>
                 <div
                     className="nodes-container"
+                    ref={nodeWrapper}
                     style={{
                         transform: `translate(${viewport.offset.x * viewport.zoom}px, ${viewport.offset.y * viewport.zoom}px) scale(${viewport.zoom})`
                     }}
