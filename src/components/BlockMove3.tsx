@@ -8,6 +8,7 @@ const BlockMove = () => {
     // https://stackoverflow.com/questions/60190965/zoom-scale-at-mouse-position
 
     const layerRef = useRef<HTMLDivElement>(null);
+    const nodeContainerRef = useRef<HTMLDivElement>(null);
     const { refs } = useStores();
 
     const [viewport, setViewport] = useState({
@@ -85,17 +86,50 @@ const BlockMove = () => {
             e.preventDefault();
             e.stopPropagation();
 
-            const speedFactor =
-                (e.deltaMode === 1 ? 0.05 : e.deltaMode ? 1 : 0.002);
+            const speedFactor = (e.deltaMode === 1 ? 0.05 : e.deltaMode ? 1 : 0.002);
+
+
+
+            // if (e.deltaY < 0) {
+            //     view.scaleAt({ x, y }, 1.1, 'in');
+            //     view.applyTo();
+            // } else {
+            //     view.scaleAt({ x, y }, 1 / 1.1, 'out');
+            //     view.applyTo();
+            // }
+
 
             setViewport((prev) => {
+
+                const rect = layerRef.current?.parentElement?.getBoundingClientRect();
+                const offsetLeft = nodeContainerRef.current?.offsetLeft || 0;
+                const offsetTop = nodeContainerRef.current?.offsetTop || 0;
+
+                const computedNodeContainer = getComputedStyle(nodeContainerRef.current);
+                const trans = computedNodeContainer.transform;
+                const matrix = new DOMMatrix(trans);
+
+                console.log(matrix);
+
+                const x = e.pageX - matrix.m41 - (rect?.width || 2 / 2);
+                const y = e.pageY - matrix.m42 - (rect?.height || 2 / 2);
+
                 const pinchDelta = -e.deltaY * speedFactor;
+                const ofsX = prev.offset.x;
+                const ofsY = prev.offset.y;
+
+                console.dir(nodeContainerRef.current)
+                console.log(x - (x - ofsX) * e.deltaY < 0 ? 1.1 : 1/1.1);
 
                 return {
-                    ...prev,
+                    // ...prev,
+                    offset: {
+                        x: x - (x - ofsX) * (-e.deltaY < 0 ? 1.1 : 1/1.1), // Math.abs(pinchDelta),
+                        y: y - (y - ofsY) * (-e.deltaY < 0 ? 1.1 : 1/1.1), // pinchDelta,
+                    },
                     zoom: Math.min(
-                        100,
-                        Math.max(0.1, prev.zoom * Math.pow(2, pinchDelta))
+                        32,
+                        Math.max(0.1, prev.zoom *= (-e.deltaY < 0 ? 1.1 : 1/1.1))
                     )
                 };
             });
@@ -127,6 +161,7 @@ const BlockMove = () => {
             <div className="container" style={{ backgroundPosition: `${viewport.offset.x * viewport.zoom}px ${viewport.offset.y * viewport.zoom}px`, backgroundSize: viewZoom }}>
                 <div
                     className="nodes-container"
+                    ref={nodeContainerRef}
                     style={{
                         transform: `translate(${viewport.offset.x * viewport.zoom}px, ${viewport.offset.y * viewport.zoom}px) scale(${viewport.zoom})`
                     }}

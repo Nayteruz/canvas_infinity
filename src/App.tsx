@@ -1,6 +1,8 @@
 import { observer } from "mobx-react-lite";
 import './App.scss'
 import BlockMove from './components/BlockMove'
+import BlockMove2 from './components/BlockMove2'
+import BlockMove3 from './components/BlockMove3'
 import Overlay from './components/Overlay'
 
 const App = () => {
@@ -12,7 +14,7 @@ const App = () => {
       <div className='main'>
         <div className='canvas'>
           <Overlay />
-          <BlockMove />
+          <BlockMove3 />
         </div>
       </div>
       <aside className='right'></aside>

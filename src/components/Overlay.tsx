@@ -1,6 +1,6 @@
 import { observer } from "mobx-react-lite";
 import { useStores } from "../stores/root-store-context";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, MouseEvent } from "react";
 
 const Overlay = () => {
 
