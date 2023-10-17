@@ -5,6 +5,8 @@ class EventStore {
     top: number = 0;
     width: number = 0;
     height: number = 0;
+    zoom: number = 1;
+    isGrabing: boolean = false;
 
     constructor() {
         makeAutoObservable(this)
@@ -17,6 +19,18 @@ class EventStore {
 
     setLeft(value: number) {
         this.left = value
+    }
+    
+    setZoom(value:number) {
+        this.zoom = value;
+    }
+
+    setGrab(value: boolean) {
+        this.isGrabing = value;
+    }
+
+    get zoomPercent() {
+        return this.zoom / 1 * 100;
     }
 }
 

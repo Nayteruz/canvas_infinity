@@ -136,3 +136,46 @@
   }
   }
 }
+
+.space-control {
+  position: fixed;
+  left: 50%;
+  bottom: 10px;
+  background-color: #eee;
+  border-radius: 20px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    min-width: 30px;
+    padding: 10px;
+    height: 30px;
+    background-color: #fff;
+    cursor: pointer;
+    color: #ccc;
+
+    svg {
+      path {
+        fill: currentColor;
+      }
+    }
+
+    &:hover, &.active {
+      background-color: #ddd;
+      color: #333;
+    }
+
+    &.scale-percent {
+      background-color: #fff;
+      color: #333;
+    }
+  }
+
+}

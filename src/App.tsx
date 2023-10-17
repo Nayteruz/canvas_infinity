@@ -4,6 +4,7 @@ import BlockMove from './components/BlockMove'
 import BlockMove2 from './components/BlockMove2'
 import BlockMove3 from './components/BlockMove3'
 import Overlay from './components/Overlay'
+import { SpaceControl } from "./components/SpaceControl";
 
 const App = () => {
 
@@ -15,6 +16,7 @@ const App = () => {
         <div className='canvas'>
           <Overlay />
           <BlockMove />
+          <SpaceControl />
         </div>
       </div>
       <aside className='right'></aside>

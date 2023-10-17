@@ -1,4 +1,4 @@
-import { FC, MouseEvent, useRef, useState } from "react";
+import { FC } from "react";
 import NodeElementWrap from "./NodeElementWrap";
 
 interface NodeElementProps {
@@ -6,13 +6,12 @@ interface NodeElementProps {
   top: number;
   text: string;
   zoom: number;
-  isSpaceDown: boolean;
 }
 
-const NodeElement: FC<NodeElementProps> = ({left, top, text = "", zoom, isSpaceDown }) => {
+const NodeElement: FC<NodeElementProps> = ({left, top, text = "", zoom }) => {
 
   return (
-    <NodeElementWrap x={left} y={top} zoom={zoom} isSpaceDown={isSpaceDown}>
+    <NodeElementWrap x={left} y={top} zoom={zoom}>
       <div className="node">
         {text}
       </div>
