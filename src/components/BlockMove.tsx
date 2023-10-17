@@ -1,7 +1,9 @@
 import { observer } from "mobx-react-lite";
-import { MouseEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
+import { MouseEvent, useEffect, useRef, useState } from "react";
 import { useStores } from "../stores/root-store-context";
+import useZoomBackground from "../hooks/backgroundZoomPosition";
 import NodeElement from './NodeElement'
+
 
 const BlockMove = () => {
 
@@ -9,6 +11,7 @@ const BlockMove = () => {
 
     const layerRef = useRef<HTMLDivElement>(null);
     const nodeWrapper = useRef<HTMLDivElement>(null);
+
     const { refs } = useStores();
 
     const [viewport, setViewport] = useState({
@@ -16,21 +19,29 @@ const BlockMove = () => {
             x: 0,
             y: 0
         },
-        zoom: 1
+        pos: { x: 0, y: 0 },
+        zoom: 1,
+        derty: true,
     });
 
+    const [viewOffset, setViewOffset] = useState({ x: 0, y: 0 });
+    const [position, setPosition] = useState({ x: 0, y: 0 });
+    const [zoom, setZoom] = useState(1);
+
+    const viewZoom = useZoomBackground(zoom);
+
     const nodeBlocks: { x: number, y: number, text: string }[] = [
-        { x: 0, y: 0, text: 'node #1' },
-        { x: 180, y: 0, text: 'node #2' },
-        { x: 20, y: 160, text: 'node #3' },
-        { x: 200, y: 160, text: 'node #4' },
-        { x: 500, y: 100, text: 'node #5' },
+        { x: 607, y: 266, text: 'node #1' },
+        { x: 392, y: 123, text: 'node #2' },
+        { x: 560, y: 400, text: 'node #3' },
+        { x: 869, y: 369, text: 'node #4' },
+        { x: 805, y: 143, text: 'node #5' },
     ];
 
     const [isDragging, setIsDragging] = useState(false);
     const [isSpaceDown, setIsSpaceDown] = useState(false);
 
-    const onKeySpaceDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    const onKeySpaceDown = (e: KeyboardEvent) => {
         if (e.code === 'Space') {
             setIsSpaceDown(true);
         }
@@ -59,26 +70,20 @@ const BlockMove = () => {
             return;
         }
 
-        setViewport((prev) => ({
-            ...prev,
-            offset: {
-                x: prev.offset.x + e.movementX / viewport.zoom,
-                y: prev.offset.y + e.movementY / viewport.zoom
-            }
-        }));
-    };
+        setViewOffset((prev) => ({
 
-    const zoomInitial = viewport.zoom * 128;
-    const zoomValues = [Math.trunc(zoomInitial), 4, 8];
-    let viewZoom = '';
-    for (const [k, v] of zoomValues.entries()) {
-        if (k === 0) {
-            viewZoom += `${v}px ${v}px, ${v}px ${v}px`
-        } else {
-            const z = zoomValues[0] / v;
-            viewZoom += `, ${z}px ${z}px, ${z}px ${z}px`
-        }
-    }
+            x: prev.x + e.movementX / zoom,
+            y: prev.y + e.movementY / zoom,
+        }))
+        console.log()
+        // setViewport((prev) => ({
+        //     ...prev,
+        //     offset: {
+        //         x: prev.offset.x + e.movementX / viewport.zoom,
+        //         y: prev.offset.y + e.movementY / viewport.zoom
+        //     }
+        // }));
+    };
 
 
     useEffect(() => {
@@ -94,19 +99,71 @@ const BlockMove = () => {
 
             const speedFactor = (e.deltaMode === 1 ? 0.05 : e.deltaMode ? 1 : 0.002);
 
+            setZoom((prev) => {
+                const pinchDelta = -e.deltaY * speedFactor;
+                return Math.min(32, Math.max(0.1, prev * Math.pow(2, pinchDelta)));
+            });
+
+            setPosition((prev) => {
+                const pinchDelta = -e.deltaY * speedFactor;
+
+                const xm = e.pageX - ((layerRef.current?.clientWidth || 2) / 2);
+                const ym = e.pageY - ((layerRef.current?.clientHeight || 2) / 2);
+
+                return {
+                    x: xm - (xm - prev.x) * pinchDelta,
+                    y: ym - (ym - prev.y) * pinchDelta,
+                }
+            });
+
+            setViewOffset((prev) => {
+
+
+
+
+                return {
+                    x: position.x,
+                    y: position.y,
+                }
+            })
+
             setViewport((prev) => {
-                const prevScale = prev.zoom;
                 const pinchDelta = -e.deltaY * speedFactor;
                 const maxMinZoom = Math.min(32, Math.max(0.1, prev.zoom * Math.pow(2, pinchDelta)));
 
-                return {
-                    ...prev,
-                    zoom: maxMinZoom,
-                };
-
+                // return {
+                //     ...prev,
+                //     zoom: maxMinZoom,
+                // };
 
                 // experiment
 
+                // let pos = { x: prev.pos.x, y: prev.pos.y };
+
+                const x = e.pageX - ((layerRef.current?.clientWidth || 2) / 2);
+                const y = e.pageY - ((layerRef.current?.clientHeight || 2) / 2);
+
+                // if (e.deltaY < 0) {
+
+                //     pos.x = x - (x - pos.x) * pinchDelta;
+                //     pos.y = y - (y - pos.y) * pinchDelta;
+                // } else { 
+                //     pos.x = x - (x - pos.x) * pinchDelta;
+                //     pos.y = y - (y - pos.y) * pinchDelta;
+                // }
+
+                return {
+                    ...prev,
+                    pos: {
+                        x: x - (x - prev.pos.x) * pinchDelta,
+                        y: y - (y - prev.pos.y) * pinchDelta,
+                    },
+                    offset: {
+                        x: prev.pos.x,
+                        y: prev.pos.y,
+                    },
+                    zoom: maxMinZoom,
+                };
             });
         };
     }, [setViewport]);
@@ -125,24 +182,22 @@ const BlockMove = () => {
 
     return (
         <div
-            className={`app ${isSpaceDown ? 'dragging' : ''}`}
+            className={`space ${isSpaceDown ? 'dragging' : ''}`}
             ref={layerRef}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
             onMouseMove={handleMouseMove}
-            onKeyDown={onKeySpaceDown}
-            onKeyUp={onKeySpaceUp}
         >
-            <div className="container" style={{ backgroundPosition: `${viewport.offset.x * viewport.zoom}px ${viewport.offset.y * viewport.zoom}px`, backgroundSize: viewZoom }}>
+            <div className="container" style={{ backgroundPosition: `${viewOffset.x * zoom}px ${viewOffset.y * zoom}px`, backgroundSize: viewZoom }}>
                 <div
                     className="nodes-container"
                     ref={nodeWrapper}
                     style={{
-                        transform: `translate(${viewport.offset.x * viewport.zoom}px, ${viewport.offset.y * viewport.zoom}px) scale(${viewport.zoom})`
+                        transform: `translate(${viewOffset.x * zoom}px, ${viewOffset.y * zoom}px) scale(${zoom})`
                     }}
                 >
                     {nodeBlocks.map(({ x, y, text }) => {
-                        return (<NodeElement key={text} left={x} top={y} text={text} zoom={viewport.zoom} />)
+                        return (<NodeElement key={text} left={x} top={y} text={text} zoom={zoom} isSpaceDown={isSpaceDown} />)
                     })}
                 </div>
             </div>

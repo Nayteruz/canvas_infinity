@@ -8,7 +8,7 @@ import Overlay from './components/Overlay'
 const App = () => {
 
   return (
-    <div className='wrapper'>
+    <div className='app'>
       <header className='header'></header>
       <aside className='left'></aside>
       <div className='main'>

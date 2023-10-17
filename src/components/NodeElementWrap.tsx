@@ -5,9 +5,10 @@ interface NodeElementWrapProps {
     x: number;
     y: number;
     zoom: number;
+    isSpaceDown: boolean;
 }
 
-const NodeElementWrap: FC<NodeElementWrapProps> = ({ children, x, y, zoom }) => {
+const NodeElementWrap: FC<NodeElementWrapProps> = ({ children, x, y, zoom, isSpaceDown }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [position, setPosition] = useState({ x: x, y: y });
     const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -36,8 +37,19 @@ const NodeElementWrap: FC<NodeElementWrapProps> = ({ children, x, y, zoom }) => 
         };
     }, [isDragging, offset, zoom]);
 
+    useEffect(() => {
+
+        if (isSpaceDown) {
+            setIsDragging(false);
+        }
+
+    }, [isSpaceDown])
+
     const handleMouseDown = (e: DivMouseEvent) => {
-        setIsDragging(true);
+        if (!isSpaceDown) {
+            setIsDragging(true);
+        }
+        
         const offsetX = (e.clientX - position.x * zoom);
         const offsetY = (e.clientY - position.y * zoom);
         setOffset({ x: offsetX, y: offsetY });

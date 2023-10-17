@@ -6,18 +6,13 @@ interface NodeElementProps {
   top: number;
   text: string;
   zoom: number;
+  isSpaceDown: boolean;
 }
 
-const NodeElement: FC<NodeElementProps> = ({
-  left = 0,
-  top = 0,
-  text = "",
-  zoom,
-}) => {
-
+const NodeElement: FC<NodeElementProps> = ({left, top, text = "", zoom, isSpaceDown }) => {
 
   return (
-    <NodeElementWrap x={left} y={top} zoom={zoom}>
+    <NodeElementWrap x={left} y={top} zoom={zoom} isSpaceDown={isSpaceDown}>
       <div className="node">
         {text}
       </div>
