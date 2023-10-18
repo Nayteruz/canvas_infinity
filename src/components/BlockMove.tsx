@@ -3,80 +3,14 @@ import { MouseEvent, useEffect, useRef, useState } from "react";
 import { useStores } from "../stores/root-store-context";
 import useZoomBackground from "../hooks/backgroundZoomPosition";
 import NodeElement from './NodeElement'
+import { runInAction } from "mobx";
 
 
 const BlockMove = observer(() => {
 
     // https://stackoverflow.com/questions/60190965/zoom-scale-at-mouse-position
 
-    const layerRef = useRef<HTMLDivElement>(null);
-    const nodeWrapper = useRef<HTMLDivElement>(null);
-
-    const [scale, setScale] = useState(1);
-    const [panning, setPanning] = useState(false);
-    const [point, setPoint] = useState({x: 0, y: 0});
-    const [start, setStart] = useState({x: 0, y: 0});
-    
-    const onMouseDown = (e: MouseEvent) => {
-        console.log('mouse down');
-        e.preventDefault();
-        setStart({x: e.clientX - point.x, y: e.clientY - point.y});
-        setPanning(true);
-    }
-
-    const onMouseUp = () => {
-        setPanning(false);
-    }
-
-    const onMouseMove = (e: MouseEvent) => {
-        e.preventDefault();
-        if (!panning) {
-          return;
-        }
-        setPoint({
-            x: e.clientX - start.x,
-            y: e.clientY - start.y,
-        })
-    }
-
-    const onWheel = (e: MouseEvent) => {
-        e.preventDefault();
-        console.log(e);
-        const xs = (e.clientX - point.x) / scale;
-        const ys = (e.clientY - point.y) / scale;
-        let delta = (e.wheelDelta ? e.wheelDelta : -e.deltaY)
-
-        console.log(delta);
-
-        if (delta > 0) {
-            setScale((prev) => {
-                const z = prev * 1.1
-                storeEvents.setZoom(z)
-                return z;
-            })
-        } else {
-            setScale((prev) => {
-                const z = prev / 1.1;
-                storeEvents.setZoom(z)
-                return z
-            })
-        }
-        console.log(scale);
-
-        setPoint({
-            x: e.clientX - xs * scale,
-            y: e.clientY - ys * scale,
-        })
-    }
-
-
-    const { refs, storeEvents } = useStores();
-
-    // const [viewOffset, setViewOffset] = useState({ x: 0, y: 0 });
-    // const [position, setPosition] = useState({ x: 0, y: 0 });
-    // const [zoom, setZoom] = useState(1);
-
-    const viewZoom = useZoomBackground(scale);
+    const { storeEvents } = useStores();
 
     const nodeBlocks: { x: number, y: number, text: string }[] = [
         { x: 607, y: 266, text: 'node #1' },
@@ -86,7 +20,53 @@ const BlockMove = observer(() => {
         { x: 805, y: 143, text: 'node #5' },
     ];
 
-    // const [isDragging, setIsDragging] = useState(false);
+    const layerRef = useRef<HTMLDivElement>(null);
+    const nodeWrapper = useRef<HTMLDivElement>(null);
+
+    const view = (() => {
+        const positionScale = { x: 0, y: 0, scale: 1 };
+        var m = positionScale;
+        var scale = 1;
+        const pos = { x: 0, y: 0 };
+        var dirty = true;
+        const API = {
+            applyTo() {
+                if (dirty) {
+                    this.update()
+                }
+            },
+            update() {
+                dirty = false;
+                m = { x: pos.x, y: pos.y, scale }
+            },
+            pan(amount: {x: number, y: number}) {
+                if (dirty) {
+                    this.update()
+                }
+                pos.x += amount.x;
+                pos.y += amount.y;
+                dirty = true;
+            },
+            scaleAt(at: { x: number, y: number }, amount: number) {
+                if (dirty) { this.update() }
+                scale *= amount;
+                pos.x = at.x - (at.x - pos.x) * amount;
+                pos.y = at.y - (at.y - pos.y) * amount;
+                dirty = true;
+            },
+            getPositionScale () {
+                return positionScale;
+            }
+        };
+        return API;
+    })();
+
+    const [scale, setScale] = useState(1);
+    const [panning, setPanning] = useState(false);
+    const [point, setPoint] = useState({ x: 0, y: 0 });
+    const [start, setStart] = useState({ x: 0, y: 0 });
+
+    const viewZoom = useZoomBackground(view.getPositionScale().scale);
 
     const onKeySpaceDown = (e: KeyboardEvent) => {
         if (e.code === 'Space') {
@@ -98,132 +78,101 @@ const BlockMove = observer(() => {
         storeEvents.setGrab(false);
     }
 
-    // const handleMouseDown = () => {
-    //     setIsDragging(true);
-    // };
+    const onMouseDown = (e: MouseEvent) => {
+        e.preventDefault();
+        setPanning(true);
+    }
 
-    // const handleMouseUp = () => {
-    //     setIsDragging(false);
-    // };
+    const onMouseUp = () => {
+        setPanning(false);
+    }
 
-    // const handleMouseMove = (e: MouseEvent) => {
-    //     if (!isDragging || !storeEvents.isGrabing) {
-    //         return;
-    //     }
+    const onMouseMove = (e: MouseEvent) => {
+        e.preventDefault();
+        if (!panning || !storeEvents.isGrabing) {
+            return;
+        }
 
-    //     if (e.buttons !== 1) {
-    //         setIsDragging(false);
+        storeEvents.setMovePosition(e.movementX, e.movementY);
 
-    //         return;
-    //     }
+        const pos = view.pan({ x: 0, y: 0 });
 
-    //     setViewOffset((prev) => ({
-    //         x: prev.x + e.movementX / zoom,
-    //         y: prev.y + e.movementY / zoom,
-    //     }))
+        console.log(pos);
+        // setPoint((prev) => ({
+        //     x: prev.x + e.movementX / storeEvents.zoom,
+        //     y: prev.y + e.movementY / storeEvents.zoom,
+        // }))
+    }
 
-    //     setPosition({
-    //         x: viewOffset.x,
-    //         y: viewOffset.y,
+    // const scaleAt = (x: number, y: number, amount: number) => {
+
+    //     setScale(() => {
+    //         const z = Math.min(32, Math.max(0.1, storeEvents.zoom * amount));
+    //         storeEvents.setZoom(z)
+    //         return z;
     //     })
 
-    // };
+    //     console.log(storeEvents.left, storeEvents.top);
+    // }
 
-    // useEffect(() => {
-    //     if (!layerRef.current) {
-    //         return;
-    //     }
+    const onWheel = (e: WheelEvent) => {
+        e.preventDefault();
 
-    //     refs.setOverlayRef(layerRef);
+        const amount = (e.deltaY < 0 ? 1.1 : 1 / 1.1);
 
-    //     layerRef.current.onwheel = (e: WheelEvent) => {
-    //         e.preventDefault();
-    //         e.stopPropagation();
+        const rect = layerRef.current?.parentElement?.getBoundingClientRect();
+        const offsetLeft = layerRef.current?.parentElement?.offsetLeft || 0;
+        const offsetTop = layerRef.current?.parentElement?.offsetTop || 0;
 
-    //         const speedFactor = (e.deltaMode === 1 ? 0.05 : e.deltaMode ? 1 : 0.002);
+        const newX = e.pageX - offsetLeft - ((rect?.width || 2) / 2);
+        const newY = e.pageY - offsetTop - ((rect?.height || 2) / 2);
 
-    //         setZoom((prev) => {
-    //             const pinchDelta = -e.deltaY * speedFactor;
-    //             const zoom = Math.min(32, Math.max(0.1, prev * Math.pow(2, pinchDelta)));
-    //             storeEvents.setZoom(zoom);
-    //             return zoom;
-    //         });
+        // scaleAt(newX, newY, amount);
 
-    //         setPosition((prev) => {
-    //             const pinchDelta = -e.deltaY * speedFactor;
+        // const z = Math.min(32, Math.max(0.1, storeEvents.zoom * amount));
+        runInAction(() => {
+            storeEvents.setZoom(amount);
+        })
+        runInAction(() => {
+            storeEvents.setScalePoisition(newX, newY, amount);
+        })
 
-    //             const xm = e.pageX - ((layerRef.current?.clientWidth || 2) / 2);
-    //             const ym = e.pageY - ((layerRef.current?.clientHeight || 2) / 2);
 
-    //             return {
-    //                 x: prev.x + xm - (xm - prev.x) * pinchDelta,
-    //                 y: prev.x + ym - (ym - prev.y) * pinchDelta,
-    //             }
-    //         });
+        // setPoint((prev) => {
+        //     const xx = newX - (newX - point.x) * amount;
+        //     const yy = newY - (newY - point.y) * amount;
 
-    //         setViewOffset(() => {
-    //             console.log(position);
-    //             return {
-    //                 x: position.x,
-    //                 y: position.y,
-    //             }
-    //         })
+        //     console.log(point);
+        //     return {
+        //         x: xx,
+        //         y: yy
+        //     }
+        // })
 
-    //         /*setViewport((prev) => {
-    //             const pinchDelta = -e.deltaY * speedFactor;
-    //             const maxMinZoom = Math.min(32, Math.max(0.1, prev.zoom * Math.pow(2, pinchDelta)));
-    //             storeEvents.setZoom(maxMinZoom);
-
-    //             // return {
-    //             //     ...prev,
-    //             //     zoom: maxMinZoom,
-    //             // };
-
-    //             // experiment
-
-    //             // let pos = { x: prev.pos.x, y: prev.pos.y };
-
-    //             const x = e.pageX - ((layerRef.current?.clientWidth || 2) / 2);
-    //             const y = e.pageY - ((layerRef.current?.clientHeight || 2) / 2);
-
-    //             // if (e.deltaY < 0) {
-
-    //             //     pos.x = x - (x - pos.x) * pinchDelta;
-    //             //     pos.y = y - (y - pos.y) * pinchDelta;
-    //             // } else { 
-    //             //     pos.x = x - (x - pos.x) * pinchDelta;
-    //             //     pos.y = y - (y - pos.y) * pinchDelta;
-    //             // }
-
-    //             return {
-    //                 ...prev,
-    //                 pos: {
-    //                     x: x - (x - prev.pos.x) * pinchDelta,
-    //                     y: y - (y - prev.pos.y) * pinchDelta,
-    //                 },
-    //                 offset: {
-    //                     x: prev.pos.x,
-    //                     y: prev.pos.y,
-    //                 },
-    //                 zoom: maxMinZoom,
-    //             };
-    //         });*/
-    //     };
-    // }, [zoom, position, viewOffset]);
+        // setScale(() => {
+        //     const z = Math.min(32, Math.max(0.1, storeEvents.zoom * amount));
+        //     storeEvents.setZoom(z)
+        //     return z;
+        // })
+    }
 
     useEffect(() => {
 
         window.addEventListener('keydown', onKeySpaceDown);
         window.addEventListener('keyup', onKeySpaceUp);
-        window.addEventListener('wheel', onWheel)
+        layerRef.current?.addEventListener('wheel', onWheel);
 
         return () => {
             window.removeEventListener('keydown', onKeySpaceDown);
             window.removeEventListener('keyup', onKeySpaceUp);
-            window.removeEventListener('wheel', onWheel);
+            layerRef.current?.removeEventListener('wheel', onWheel);
         }
 
     }, [])
+
+    useEffect(() => {
+
+    }, [point])
 
     return (
         <div
@@ -233,16 +182,25 @@ const BlockMove = observer(() => {
             onMouseUp={onMouseUp}
             onMouseMove={onMouseMove}
         >
-            <div className="container" style={{ backgroundPosition: `${point.x * scale}px ${point.y * scale}px`, backgroundSize: viewZoom }}>
+            <div
+                className="container"
+                style={{ backgroundPosition: `${storeEvents.position.x * storeEvents.zoom}px ${storeEvents.position.y * storeEvents.zoom}px`, backgroundSize: viewZoom }}
+            >
                 <div
                     className="nodes-container"
                     ref={nodeWrapper}
                     style={{
-                        transform: `translate(${point.x * scale}px, ${point.y * scale}px) scale(${scale})`
+                        transform: `translate(${storeEvents.position.x * storeEvents.zoom}px, ${storeEvents.position.y * storeEvents.zoom}px) scale(${storeEvents.zoom})`
                     }}
                 >
                     {nodeBlocks.map(({ x, y, text }) => {
-                        return (<NodeElement key={text} left={x} top={y} text={text} zoom={scale} />)
+                        return (
+                            <NodeElement
+                                key={text}
+                                pos={{ x: x, y: y }}
+                                text={text}
+                            />
+                        )
                     })}
                 </div>
             </div>

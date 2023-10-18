@@ -7,6 +7,7 @@ class EventStore {
     height: number = 0;
     zoom: number = 1;
     isGrabing: boolean = false;
+    position: {x: number, y: number} = {x: 0, y: 0};
 
     constructor() {
         makeAutoObservable(this)
@@ -21,8 +22,8 @@ class EventStore {
         this.left = value
     }
     
-    setZoom(value:number) {
-        this.zoom = value;
+    setZoom(amount:number) {
+        this.zoom = Math.min(32, Math.max(0.1, this.zoom * amount));
     }
 
     setGrab(value: boolean) {
@@ -31,6 +32,26 @@ class EventStore {
 
     get zoomPercent() {
         return this.zoom / 1 * 100;
+    }
+
+    setPosition(x: number, y: number) {
+        this.position = {x, y}
+    }
+
+    setMovePosition(xm: number, ym: number) {
+        this.position = {
+            x: this.position.x + xm / this.zoom,
+            y: this.position.y + ym / this.zoom,
+        }
+    }
+
+    setScalePoisition(x: number, y: number, a:number) {
+        const oldX = this.position.x;
+        const oldY = this.position.y;
+        this.position = {
+            x: x - (x - oldX) * a,
+            y: y - (y - oldY) * a,
+        }
     }
 }
 

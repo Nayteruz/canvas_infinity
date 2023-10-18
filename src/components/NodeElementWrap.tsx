@@ -3,22 +3,20 @@ import { useStores } from "../stores/root-store-context";
 
 interface NodeElementWrapProps {
     children: ReactNode;
-    x: number;
-    y: number;
-    zoom: number;
+    pos: {x: number, y: number}
 }
 
-const NodeElementWrap: FC<NodeElementWrapProps> = ({ children, x, y, zoom }) => {
+const NodeElementWrap: FC<NodeElementWrapProps> = ({ children, pos }) => {
     const [isDragging, setIsDragging] = useState(false);
-    const [position, setPosition] = useState({ x: x, y: y });
+    const [position, setPosition] = useState({ x: pos.x, y: pos.y });
     const [offset, setOffset] = useState({ x: 0, y: 0 });
     const { storeEvents } = useStores();
 
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
             if (isDragging) {
-                const newX = (e.clientX - offset.x) / zoom;
-                const newY = (e.clientY - offset.y) / zoom;
+                const newX = (e.clientX - offset.x) / storeEvents.zoom;
+                const newY = (e.clientY - offset.y) / storeEvents.zoom;
                 setPosition({ x: newX, y: newY });
             }
         };
@@ -36,10 +34,9 @@ const NodeElementWrap: FC<NodeElementWrapProps> = ({ children, x, y, zoom }) => 
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
         };
-    }, [isDragging, offset, zoom]);
+    }, [isDragging, offset, storeEvents.zoom]);
 
     useEffect(() => {
-
         if (storeEvents.isGrabing) {
             setIsDragging(false);
         }
@@ -47,12 +44,14 @@ const NodeElementWrap: FC<NodeElementWrapProps> = ({ children, x, y, zoom }) => 
     }, [storeEvents.isGrabing])
 
     const handleMouseDown = (e: DivMouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (!storeEvents.isGrabing) {
             setIsDragging(true);
         }
 
-        const offsetX = (e.clientX - position.x * zoom);
-        const offsetY = (e.clientY - position.y * zoom);
+        const offsetX = (e.clientX - position.x * storeEvents.zoom);
+        const offsetY = (e.clientY - position.y * storeEvents.zoom);
         setOffset({ x: offsetX, y: offsetY });
     };
 

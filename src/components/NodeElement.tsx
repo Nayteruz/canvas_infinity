@@ -2,16 +2,14 @@ import { FC } from "react";
 import NodeElementWrap from "./NodeElementWrap";
 
 interface NodeElementProps {
-  left: number;
-  top: number;
+  pos:{x: number, y: number}
   text: string;
-  zoom: number;
 }
 
-const NodeElement: FC<NodeElementProps> = ({left, top, text = "", zoom }) => {
+const NodeElement: FC<NodeElementProps> = ({pos, text = "" }) => {
 
   return (
-    <NodeElementWrap x={left} y={top} zoom={zoom}>
+    <NodeElementWrap pos={pos}>
       <div className="node">
         {text}
       </div>
