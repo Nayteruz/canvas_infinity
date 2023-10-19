@@ -3,7 +3,6 @@ import { MouseEvent, useEffect, useRef, useState } from "react";
 import { useStores } from "../stores/root-store-context";
 import useZoomBackground from "../hooks/backgroundZoomPosition";
 import NodeElement from './NodeElement'
-import { runInAction } from "mobx";
 
 
 const BlockMove = observer(() => {
@@ -23,12 +22,23 @@ const BlockMove = observer(() => {
     const layerRef = useRef<HTMLDivElement>(null);
     const nodeWrapper = useRef<HTMLDivElement>(null);
 
+    const [scale, setScale] = useState(1);
+    const [point, setPoint] = useState({ x: 0, y: 0 });
+    const [zoomScale, setZoomScale] = useState({ x: 0, y: 0, scale: 1 });
+    const [isDragging, setIsDragging] = useState(false);
+
+    // const [start, setStart] = useState({ x: 0, y: 0 });
+
+    useEffect(() => {
+        setPoint({x: zoomScale.x, y: zoomScale.y});
+        setScale(zoomScale.scale);
+    }, [zoomScale])
+
     const view = (() => {
-        const positionScale = { x: 0, y: 0, scale: 1 };
-        var m = positionScale;
-        var scale = 1;
+        let scale = 1;
         const pos = { x: 0, y: 0 };
-        var dirty = true;
+
+        let dirty = true;
         const API = {
             applyTo() {
                 if (dirty) {
@@ -37,36 +47,25 @@ const BlockMove = observer(() => {
             },
             update() {
                 dirty = false;
-                m = { x: pos.x, y: pos.y, scale }
+                setZoomScale({ x: pos.x, y: pos.y, scale: scale })
             },
-            pan(amount: {x: number, y: number}) {
-                if (dirty) {
-                    this.update()
+            scaleAt(at: { x: number, y: number }, amount: number, d: 'in' | 'out') {
+                if (scale >= 32 && d === 'in' || scale <= 0.1 && d === 'out') {
+                    return;
                 }
-                pos.x += amount.x;
-                pos.y += amount.y;
-                dirty = true;
-            },
-            scaleAt(at: { x: number, y: number }, amount: number) {
-                if (dirty) { this.update() }
+                if (dirty) {
+                    this.update();
+                }
+                
                 scale *= amount;
-                pos.x = at.x - (at.x - pos.x) * amount;
-                pos.y = at.y - (at.y - pos.y) * amount;
+                
+                pos.x = at.x - ((at.x - pos.x) * amount);
+                pos.y = at.y - ((at.y - pos.y) * amount);
                 dirty = true;
             },
-            getPositionScale () {
-                return positionScale;
-            }
         };
         return API;
     })();
-
-    const [scale, setScale] = useState(1);
-    const [panning, setPanning] = useState(false);
-    const [point, setPoint] = useState({ x: 0, y: 0 });
-    const [start, setStart] = useState({ x: 0, y: 0 });
-
-    const viewZoom = useZoomBackground(view.getPositionScale().scale);
 
     const onKeySpaceDown = (e: KeyboardEvent) => {
         if (e.code === 'Space') {
@@ -80,80 +79,50 @@ const BlockMove = observer(() => {
 
     const onMouseDown = (e: MouseEvent) => {
         e.preventDefault();
-        setPanning(true);
+        setIsDragging(true);
     }
 
-    const onMouseUp = () => {
-        setPanning(false);
+    const onMouseUp = (e: MouseEvent) => {
+        setIsDragging(false);
     }
 
     const onMouseMove = (e: MouseEvent) => {
         e.preventDefault();
-        if (!panning || !storeEvents.isGrabing) {
+        if (!isDragging || !storeEvents.isGrabing) {
             return;
         }
+        if (e.buttons !== 1) {
+            setIsDragging(false);
 
-        storeEvents.setMovePosition(e.movementX, e.movementY);
-
-        const pos = view.pan({ x: 0, y: 0 });
-
-        console.log(pos);
-        // setPoint((prev) => ({
-        //     x: prev.x + e.movementX / storeEvents.zoom,
-        //     y: prev.y + e.movementY / storeEvents.zoom,
-        // }))
+            return;
+        }
+        setPoint((prev) => {
+            return {
+                x: prev.x + e.movementX,
+                y: prev.y + e.movementY
+            }
+        })
     }
 
-    // const scaleAt = (x: number, y: number, amount: number) => {
-
-    //     setScale(() => {
-    //         const z = Math.min(32, Math.max(0.1, storeEvents.zoom * amount));
-    //         storeEvents.setZoom(z)
-    //         return z;
-    //     })
-
-    //     console.log(storeEvents.left, storeEvents.top);
-    // }
 
     const onWheel = (e: WheelEvent) => {
         e.preventDefault();
-
-        const amount = (e.deltaY < 0 ? 1.1 : 1 / 1.1);
+        e.stopPropagation();
 
         const rect = layerRef.current?.parentElement?.getBoundingClientRect();
         const offsetLeft = layerRef.current?.parentElement?.offsetLeft || 0;
         const offsetTop = layerRef.current?.parentElement?.offsetTop || 0;
 
-        const newX = e.pageX - offsetLeft - ((rect?.width || 2) / 2);
-        const newY = e.pageY - offsetTop - ((rect?.height || 2) / 2);
+        const x = e.pageX - offsetLeft - ((rect?.width || 2) / 2);
+        const y = e.pageY - offsetTop - ((rect?.height || 2) / 2);
 
-        // scaleAt(newX, newY, amount);
-
-        // const z = Math.min(32, Math.max(0.1, storeEvents.zoom * amount));
-        runInAction(() => {
-            storeEvents.setZoom(amount);
-        })
-        runInAction(() => {
-            storeEvents.setScalePoisition(newX, newY, amount);
-        })
-
-
-        // setPoint((prev) => {
-        //     const xx = newX - (newX - point.x) * amount;
-        //     const yy = newY - (newY - point.y) * amount;
-
-        //     console.log(point);
-        //     return {
-        //         x: xx,
-        //         y: yy
-        //     }
-        // })
-
-        // setScale(() => {
-        //     const z = Math.min(32, Math.max(0.1, storeEvents.zoom * amount));
-        //     storeEvents.setZoom(z)
-        //     return z;
-        // })
+        if (e.deltaY < 0) {
+            view.scaleAt({ x, y }, 1.1, 'in');
+            view.applyTo();
+        } else {
+            view.scaleAt({ x, y }, 1 / 1.1, 'out');
+            view.applyTo();
+        }
     }
 
     useEffect(() => {
@@ -170,10 +139,6 @@ const BlockMove = observer(() => {
 
     }, [])
 
-    useEffect(() => {
-
-    }, [point])
-
     return (
         <div
             className={`space ${storeEvents.isGrabing ? 'dragging' : ''}`}
@@ -184,13 +149,13 @@ const BlockMove = observer(() => {
         >
             <div
                 className="container"
-                style={{ backgroundPosition: `${storeEvents.position.x * storeEvents.zoom}px ${storeEvents.position.y * storeEvents.zoom}px`, backgroundSize: viewZoom }}
+                style={{ backgroundPosition: `${point.x * scale}px ${point.y * scale}px` }}
             >
                 <div
                     className="nodes-container"
                     ref={nodeWrapper}
                     style={{
-                        transform: `translate(${storeEvents.position.x * storeEvents.zoom}px, ${storeEvents.position.y * storeEvents.zoom}px) scale(${storeEvents.zoom})`
+                        transform: `translate(${point.x}px, ${point.y}px) scale(${scale})`,
                     }}
                 >
                     {nodeBlocks.map(({ x, y, text }) => {
