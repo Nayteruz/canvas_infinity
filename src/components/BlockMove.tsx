@@ -1,7 +1,6 @@
 import { observer } from "mobx-react-lite";
 import { MouseEvent, useEffect, useRef, useState } from "react";
 import { useStores } from "../stores/root-store-context";
-import useZoomBackground from "../hooks/backgroundZoomPosition";
 import NodeElement from './NodeElement'
 
 
@@ -82,7 +81,7 @@ const BlockMove = observer(() => {
         setIsDragging(true);
     }
 
-    const onMouseUp = (e: MouseEvent) => {
+    const onMouseUp = () => {
         setIsDragging(false);
     }
 
