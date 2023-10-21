@@ -3,6 +3,7 @@ import './App.scss'
 import BlockMove from './components/BlockMove'
 import BlockMove2 from './components/BlockMove2'
 import BlockMove3 from './components/BlockMove3'
+import BlockMove4 from './components/BlockMove4'
 import Overlay from './components/Overlay'
 import { SpaceControl } from "./components/SpaceControl";
 
@@ -15,7 +16,7 @@ const App = () => {
       <div className='main'>
         <div className='canvas'>
           <Overlay />
-          <BlockMove />
+          <BlockMove4 />
           <SpaceControl />
         </div>
       </div>
