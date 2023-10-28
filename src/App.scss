@@ -3,10 +3,9 @@
   height: 100%;
   display: grid;
   grid-template-areas:
-    'top top top'
-    'left center right'
-    'foo foo foo'
-  ;
+    "top top top"
+    "left center right"
+    "foo foo foo";
   grid-auto-rows: 50px 1fr 30px;
   grid-auto-columns: 260px 1fr 260px;
 
@@ -58,7 +57,6 @@
   right: 260px;
 }
 
-
 .space {
   overflow: hidden;
   width: 100%;
@@ -68,15 +66,13 @@
 
   &.dragging {
     cursor: grab;
-    &>* {
+    & > * {
       pointer-events: none;
     }
   }
 }
 
-
 .container {
-
   $bg-web: #f0efef;
 
   position: absolute;
@@ -85,15 +81,13 @@
   top: 0px;
   left: 0px;
   overflow: hidden;
-  background-image: linear-gradient($bg-web 3px, transparent 0), linear-gradient(90deg, $bg-web 3px, transparent 0),
-    linear-gradient($bg-web 2px, transparent 0), linear-gradient(90deg, $bg-web 2px, transparent 0),
-    linear-gradient($bg-web 1px, transparent 0), linear-gradient(90deg, $bg-web 1px, transparent 0);
-  background-size:
-    128px 128px,
-    128px 128px,
-    32px 32px,
-    32px 32px,
-    16px 16px,
+  background-image: linear-gradient($bg-web 3px, transparent 0),
+    linear-gradient(90deg, $bg-web 3px, transparent 0),
+    linear-gradient($bg-web 2px, transparent 0),
+    linear-gradient(90deg, $bg-web 2px, transparent 0),
+    linear-gradient($bg-web 1px, transparent 0),
+    linear-gradient(90deg, $bg-web 1px, transparent 0);
+  background-size: 128px 128px, 128px 128px, 32px 32px, 32px 32px, 16px 16px,
     16px 16px;
   background-position: 50% 50%;
 }
@@ -126,11 +120,15 @@
 
   &.grabbing {
     cursor: grabbing;
-  z-index: 999999;
+    z-index: 999999;
 
-  > * {
-    box-shadow: 0 0 5px 2px #a46daf;
+    > * {
+      box-shadow: 0 0 5px 2px #a46daf;
+    }
   }
+
+  iframe {
+    pointer-events: none;
   }
 }
 
@@ -165,7 +163,8 @@
       }
     }
 
-    &:hover, &.active {
+    &:hover,
+    &.active {
       background-color: #ddd;
       color: #333;
     }
@@ -175,5 +174,4 @@
       color: #333;
     }
   }
-
 }
