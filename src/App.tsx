@@ -15,7 +15,7 @@ const App = observer(() => {
       <div className="main">
         <div className="canvas">
           <Overlay />
-          <BlockMove4 />
+          <BlockMove />
           <SpaceControl />
         </div>
       </div>

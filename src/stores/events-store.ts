@@ -30,7 +30,7 @@ class EventStore {
   }
 
   get zoomPercent() {
-    return (this.zoom / 1) * 100;
+    return this.zoom * 100;
   }
 
   setPosition(x: number, y: number) {

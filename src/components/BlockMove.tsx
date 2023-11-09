@@ -25,6 +25,8 @@ const BlockMove = observer(() => {
     const [point, setPoint] = useState({ x: 0, y: 0 });
     const [zoomScale, setZoomScale] = useState({ x: 0, y: 0, scale: 1 });
     const [isDragging, setIsDragging] = useState(false);
+    const [sPos, setSPos] = useState({x: 0, y:0});
+    const [isDirty, setIsDirty] = useState(false);
 
     // const [start, setStart] = useState({ x: 0, y: 0 });
 
@@ -33,38 +35,39 @@ const BlockMove = observer(() => {
         setScale(zoomScale.scale);
     }, [zoomScale])
 
-    const view = (() => {
-        let scale = 1;
-        const pos = { x: 0, y: 0 };
+    useEffect(() => {
+        storeEvents.setZoom(scale);
+    }, [scale])
 
-        let dirty = true;
-        const API = {
-            applyTo() {
-                if (dirty) {
-                    this.update()
-                }
-            },
-            update() {
-                dirty = false;
-                setZoomScale({ x: pos.x, y: pos.y, scale: scale })
-            },
-            scaleAt(at: { x: number, y: number }, amount: number, d: 'in' | 'out') {
-                if (scale >= 32 && d === 'in' || scale <= 0.1 && d === 'out') {
-                    return;
-                }
-                if (dirty) {
-                    this.update();
-                }
-                
-                scale *= amount;
-                
-                pos.x = at.x - ((at.x - pos.x) * amount);
-                pos.y = at.y - ((at.y - pos.y) * amount);
-                dirty = true;
-            },
-        };
-        return API;
-    })();
+    useEffect(() => {
+        setPoint({x: sPos.x, y: sPos.y});
+    }, [sPos]);
+
+    useEffect(() => {
+        if(isDirty) {
+            updateTo();
+        }
+    }, [isDirty])
+
+    const updateTo = () => {
+        setIsDirty(false);
+        setZoomScale({ x: sPos.x, y: sPos.y, scale: scale })
+    }
+
+    const scaleTo = (at: { x: number, y: number }, amount: number) => {
+        if (isDirty) {
+            updateTo();
+        }
+        
+        setScale((prev) => prev * amount);
+        setSPos((prev) => {
+            return {
+                x: at.x - ((at.x - prev.x) * amount),
+                y: at.y - ((at.y - prev.y) * amount),
+            }
+        })
+        setIsDirty(true);
+    }
 
     const onKeySpaceDown = (e: KeyboardEvent) => {
         if (e.code === 'Space') {
@@ -116,11 +119,9 @@ const BlockMove = observer(() => {
         const y = e.pageY - offsetTop - ((rect?.height || 2) / 2);
 
         if (e.deltaY < 0) {
-            view.scaleAt({ x, y }, 1.1, 'in');
-            view.applyTo();
+            scaleTo({ x, y }, 1.1);
         } else {
-            view.scaleAt({ x, y }, 1 / 1.1, 'out');
-            view.applyTo();
+            scaleTo({ x, y }, 1 / 1.1);
         }
     }
 
